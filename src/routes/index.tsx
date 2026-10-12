@@ -1,24 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
+import RossmannSimulator from "@/components/rossmann/RossmannSimulator";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Rossmann Sales Lab | Linear vs KNN" },
+      { name: "description", content: "An interactive, browser-based Rossmann sales prediction lab comparing linear regression with K-nearest neighbors." },
+      { property: "og:title", content: "Rossmann Sales Lab | Linear vs KNN" },
+      { property: "og:description", content: "Explore, preprocess, train and compare Rossmann sales prediction models." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: RossmannSimulator,
 });
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}

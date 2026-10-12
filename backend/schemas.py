@@ -65,6 +65,7 @@ class MergedDatasetResponse(BaseModel):
     total_columns: int
     columns: List[str]
     sample_preview: List[Dict[str, Any]]
+    rows_sample: List[Dict[str, Any]] = []
     summary_stats: Dict[str, Dict[str, float]]
     missing_summary: Dict[str, int]
     tables_joined: List[str]

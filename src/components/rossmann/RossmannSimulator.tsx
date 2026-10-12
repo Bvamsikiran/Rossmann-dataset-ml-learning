@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import Papa from "papaparse";
 import {
-  Activity, ArrowDownToLine, BarChart3, Check, ChevronLeft, ChevronRight, CircleHelp,
-  Database, FileUp, Gauge, Moon, Play, RotateCcw, Sun, Table2, WandSparkles, Server,
-  Sparkles, Layers, Cpu, Compass, Sliders, ExternalLink, RefreshCw, AlertCircle,
+  Activity, ArrowDownToLine, BarChart3, Check, ChevronLeft, ChevronRight,
+  Database, FileUp, Gauge, Moon, Play, RotateCcw, Sun, WandSparkles,
 } from "lucide-react";
 import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart, ReferenceLine,
+  Area, AreaChart, Bar, BarChart, CartesianGrid, ComposedChart, Legend, ReferenceLine,
   ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
@@ -24,9 +23,9 @@ import {
 } from "@/lib/rossmann";
 import {
   fetchHealth, fetchDatasetStatus, loadMergedDataset, fetchFeaturesCatalog,
-  fetchCorrelations, trainModelsAPI, runKNNSweepAPI, predictLiveAPI,
-  type BackendStatus, type DatasetStatusResponse, type FeatureItem,
-  type MergedDatasetResponse, type TrainResponse, type KNNSweepResponse,
+  trainModelsAPI, runKNNSweepAPI, predictLiveAPI,
+  type DatasetStatusResponse, type FeatureItem,
+  type TrainResponse, type KNNSweepResponse,
 } from "@/lib/api";
 
 const stages = [
@@ -104,34 +103,66 @@ function Panel({
   children,
   className = "",
   badge,
+  accent,
 }: {
   title: string;
   subtitle?: string | undefined;
   children: ReactNode;
   className?: string;
   badge?: ReactNode | undefined;
+  accent?: "primary" | "success" | "warning" | "none";
 }) {
+  const accentColor =
+    accent === "success" ? "from-chart-2/60 to-chart-2/10" :
+    accent === "warning" ? "from-chart-3/60 to-chart-3/10" :
+    accent === "none" ? "" :
+    "from-primary/60 to-primary/10";
   return (
-    <section className={`min-w-0 rounded-md border border-border bg-card p-4 sm:p-5 ${className}`}>
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-            {badge}
+    <section className={`group min-w-0 rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md ${className}`}>
+      {accent !== "none" && (
+        <div className={`h-0.5 w-full rounded-t-xl bg-gradient-to-r ${accentColor}`} />
+      )}
+      <div className="p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+              {badge}
+            </div>
+            {subtitle && <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>}
           </div>
-          {subtitle && <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>}
         </div>
+        {children}
       </div>
-      {children}
     </section>
   );
 }
 
-function Metric({ label, value, detail }: { label: string; value: string; detail: string }) {
+function Metric({
+  label, value, detail, color = "primary",
+}: {
+  label: string; value: string; detail: string;
+  color?: "primary" | "success" | "warning" | "neutral";
+}) {
+  const borderColor =
+    color === "success" ? "border-chart-2" :
+    color === "warning" ? "border-chart-3" :
+    color === "neutral" ? "border-muted-foreground/40" :
+    "border-primary";
+  const bgColor =
+    color === "success" ? "bg-chart-2/5" :
+    color === "warning" ? "bg-chart-3/5" :
+    color === "neutral" ? "" :
+    "bg-primary/5";
+  const textColor =
+    color === "success" ? "text-chart-2" :
+    color === "warning" ? "text-chart-3" :
+    color === "neutral" ? "text-muted-foreground" :
+    "text-primary";
   return (
-    <div className="border-l-2 border-primary pl-3">
+    <div className={`rounded-lg border-l-2 ${borderColor} ${bgColor} py-2 pl-3 pr-2`}>
       <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{value}</p>
+      <p className={`mt-1 text-xl font-semibold tabular-nums ${textColor}`}>{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
     </div>
   );
@@ -139,13 +170,16 @@ function Metric({ label, value, detail }: { label: string; value: string; detail
 
 function EmptyState({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex min-h-56 flex-col items-center justify-center border border-dashed border-border bg-muted/30 px-5 text-center">
-      <Database className="mb-3 h-5 w-5 text-muted-foreground" />
-      <p className="text-sm font-medium text-foreground">{title}</p>
-      <div className="mt-1 max-w-sm text-xs leading-5 text-muted-foreground">{children}</div>
+    <div className="flex min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-gradient-to-br from-muted/40 to-muted/10 px-5 text-center">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted/60 ring-4 ring-border/40">
+        <Database className="h-5 w-5 text-muted-foreground" />
+      </div>
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <div className="mt-2 max-w-sm text-xs leading-5 text-muted-foreground">{children}</div>
     </div>
   );
 }
+
 
 export default function RossmannSimulator() {
   const [stage, setStage] = useState(0);
@@ -211,28 +245,20 @@ export default function RossmannSimulator() {
     checkBackend();
   }, []);
 
+  // Sync dark class to <html> so Radix portals (selects, dialogs) get dark styles
+  useEffect(() => {
+    const root = document.documentElement;
+    if (dark) {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    return () => root.classList.remove("dark");
+  }, [dark]);
+
   const prepResult = useMemo(() => preprocessData(rows, preprocess), [rows, preprocess]);
   const effectiveRows = processedRows.length ? processedRows : prepResult.rows;
 
-  const attributes = useMemo(() => {
-    return [
-      ["Store", "Store identifier (1–1,115)"],
-      ["DayOfWeek", "Day of the week (1=Mon..7=Sun)"],
-      ["Date", "Trading date of transaction"],
-      ["Sales", "Daily turnover in local currency"],
-      ["Customers", "Number of customers on that day"],
-      ["Open", "Trading status (0=closed, 1=open)"],
-      ["Promo", "Store-level promotional coupon running"],
-      ["StateHoliday", "State holiday marker (0, a, b, c)"],
-      ["SchoolHoliday", "School holiday active in district"],
-      ["StoreType", "Store model profile (a, b, c, d)"],
-      ["Assortment", "Assortment level (a=basic, b=extra, c=extended)"],
-      ["CompetitionDistance", "Distance in meters to nearest competitor"],
-      ["Mean_TemperatureC", "Mean daily temperature (°C) for store region"],
-      ["Precipitationmm", "Daily precipitation (mm)"],
-      ["trend", "Google Search index for Rossmann in federal state"],
-    ];
-  }, []);
 
   const analysis = useMemo(() => {
     if (!effectiveRows.length) return null;
@@ -476,25 +502,40 @@ export default function RossmannSimulator() {
 
   async function runFullSimulation() {
     setFullRun(true);
-    setProgress(10);
+    setProgress(15);
     if (backendReady) {
       await handleLoadRealDatasets();
-      setProgress(40);
+      setProgress(45);
       setStage(1);
-      await new Promise((r) => setTimeout(r, 200));
-      setProgress(60);
+      await new Promise((r) => setTimeout(r, 180));
+      setProgress(65);
       setStage(3);
-      await new Promise((r) => setTimeout(r, 200));
-      setProgress(75);
+      await new Promise((r) => setTimeout(r, 180));
+      setProgress(80);
       setStage(4);
       await runTraining();
       setProgress(100);
       setStage(5);
     } else {
-      createRows();
-      setProgress(50);
-      setStage(4);
-      runTraining();
+      const generated = rows.length ? rows : generateSyntheticData({ stores, days, noise, missingPercent, outlierPercent });
+      if (!rows.length) {
+        setRows(generated);
+        setSourceName("Synthetic dataset");
+      }
+      setProgress(45);
+      await new Promise((r) => setTimeout(r, 150));
+      const prepared = preprocessData(generated, preprocess).rows;
+      setProcessedRows(prepared);
+      setProgress(75);
+      await new Promise((r) => setTimeout(r, 150));
+      const nextResult = trainAndEvaluate(prepared, {
+        features: features as (keyof RossmannRow)[],
+        splitPercent,
+        k,
+        metric,
+        weighted,
+      });
+      setResult(nextResult);
       setProgress(100);
       setStage(5);
     }
@@ -550,6 +591,7 @@ export default function RossmannSimulator() {
               <Panel
                 title="1. Multi-Dataset Pipeline & Ingestion"
                 subtitle="Join train, store metadata, federal states, weather, and Google Trends on common keys."
+                accent="primary"
                 badge={
                   backendReady ? (
                     <Badge variant="outline" className="border-chart-2/40 bg-chart-2/10 text-chart-2">
@@ -560,36 +602,37 @@ export default function RossmannSimulator() {
                   )
                 }
               >
-                <div className="mb-5 space-y-3 rounded-md border border-border/80 bg-muted/40 p-4">
+                <div className="mb-5 space-y-3 rounded-xl border border-border/80 bg-muted/30 p-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-foreground">Relational Sources Detected:</span>
-                    <span className="text-[11px] text-muted-foreground">Path: G:\My Drive\...\rossmann</span>
+                    <span className="rounded-full bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground ring-1 ring-border">
+                      {datasetFiles
+                        ? `${Object.values(datasetFiles.files).filter((f) => f.exists).length}/${Object.keys(datasetFiles.files).length} tables verified`
+                        : "Multi-table schema"}
+                    </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
-                    <div className="rounded border border-border bg-card p-2">
-                      <p className="font-semibold text-primary">train.csv</p>
-                      <p className="text-[11px] text-muted-foreground">36.3 MB · Sales & Promos</p>
-                    </div>
-                    <div className="rounded border border-border bg-card p-2">
-                      <p className="font-semibold text-chart-2">store.csv</p>
-                      <p className="text-[11px] text-muted-foreground">45 KB · 1,115 Stores</p>
-                    </div>
-                    <div className="rounded border border-border bg-card p-2">
-                      <p className="font-semibold text-chart-3">weather.csv</p>
-                      <p className="text-[11px] text-muted-foreground">1.45 MB · Daily Weather</p>
-                    </div>
-                    <div className="rounded border border-border bg-card p-2">
-                      <p className="font-semibold text-foreground">googletrend.csv</p>
-                      <p className="text-[11px] text-muted-foreground">86 KB · Search Volume</p>
-                    </div>
-                    <div className="rounded border border-border bg-card p-2">
-                      <p className="font-semibold text-muted-foreground">store_states.csv</p>
-                      <p className="text-[11px] text-muted-foreground">16 Federal States</p>
-                    </div>
-                    <div className="rounded border border-border bg-card p-2">
-                      <p className="font-semibold text-muted-foreground">state_names.csv</p>
-                      <p className="text-[11px] text-muted-foreground">Full State Names</p>
-                    </div>
+                  <div className="grid grid-cols-2 gap-2.5 text-xs sm:grid-cols-3">
+                    {[
+                      { name: "train.csv", meta: "36.3 MB · Sales & Promos", tone: "text-primary", dot: "bg-primary" },
+                      { name: "store.csv", meta: "45 KB · 1,115 Stores", tone: "text-chart-2", dot: "bg-chart-2" },
+                      { name: "weather.csv", meta: "1.45 MB · Daily Weather", tone: "text-chart-3", dot: "bg-chart-3" },
+                      { name: "googletrend.csv", meta: "86 KB · Search Volume", tone: "text-foreground", dot: "bg-chart-4" },
+                      { name: "store_states.csv", meta: "16 Federal States", tone: "text-muted-foreground", dot: "bg-muted-foreground" },
+                      { name: "state_names.csv", meta: "Full State Names", tone: "text-muted-foreground", dot: "bg-muted-foreground" },
+                    ].map((src) => {
+                      const liveFile = datasetFiles?.files[src.name];
+                      return (
+                        <div key={src.name} className="group relative overflow-hidden rounded-lg border border-border bg-card p-2.5 transition-all hover:border-primary/40 hover:shadow-xs">
+                          <div className="flex items-center justify-between gap-1">
+                            <p className={`truncate font-semibold ${src.tone}`}>{src.name}</p>
+                            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${liveFile ? (liveFile.exists ? "bg-chart-2" : "bg-destructive") : src.dot}`} />
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {liveFile?.size_mb ? `${liveFile.size_mb.toFixed(2)} MB · Ready` : src.meta}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -635,8 +678,8 @@ export default function RossmannSimulator() {
                 </div>
               </Panel>
 
-              <Panel title="The Retail Story & Motivation" subtitle="Store Turnover Forecasting in Fast-Moving Retail">
-                <div className="border-l-2 border-primary pl-4 text-xs leading-6 text-foreground">
+              <Panel title="The Retail Story & Motivation" subtitle="Store Turnover Forecasting in Fast-Moving Retail" accent="success">
+                <div className="rounded-lg border-l-3 border-primary bg-primary/5 p-3.5 text-xs leading-6 text-foreground">
                   <p>
                     Rossmann operates over 3,000 drug stores across Europe. Predicting daily sales accurately ensures
                     optimized staff scheduling, prevents stockouts during promotions, and guides competitive inventory
@@ -647,10 +690,10 @@ export default function RossmannSimulator() {
                     multivariate patterns rather than simple historical averages.
                   </p>
                 </div>
-                <div className="mt-6 grid grid-cols-3 gap-3">
-                  <Metric label="Data source" value={rows.length ? "Ready" : "—"} detail={sourceName.split("·")[0] ?? ""} />
-                  <Metric label="Loaded rows" value={rows.length ? numberFormat(rows.length) : "0"} detail="Store × date" />
-                  <Metric label="ML Models" value="02" detail="Linear · KNN" />
+                <div className="mt-5 grid grid-cols-3 gap-3">
+                  <Metric label="Data source" value={rows.length ? "Ready" : "—"} detail={sourceName.split("·")[0] ?? ""} color="primary" />
+                  <Metric label="Loaded rows" value={rows.length ? numberFormat(rows.length) : "0"} detail="Store × date" color="success" />
+                  <Metric label="ML Models" value="02" detail="Linear · KNN" color="warning" />
                 </div>
               </Panel>
             </div>
@@ -658,10 +701,10 @@ export default function RossmannSimulator() {
             {rows.length > 0 && (
               <div className="mt-6 space-y-5">
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <Metric label="Total Rows" value={numberFormat(rows.length)} detail="Ready in memory" />
-                  <Metric label="Missing values" value={numberFormat(countMissing(rows))} detail="Handled in Stage 3" />
-                  <Metric label="Open days" value={`${Math.round((rows.filter((r) => r.Open === 1).length / rows.length) * 100)}%`} detail="Active trading" />
-                  <Metric label="Promotional days" value={`${Math.round((rows.filter((r) => r.Promo === 1).length / rows.length) * 100)}%`} detail="With coupon lift" />
+                  <Metric label="Total Rows" value={numberFormat(rows.length)} detail="Ready in memory" color="primary" />
+                  <Metric label="Missing values" value={numberFormat(countMissing(rows))} detail="Handled in Stage 3" color="warning" />
+                  <Metric label="Open days" value={`${Math.round((rows.filter((r) => r.Open === 1).length / rows.length) * 100)}%`} detail="Active trading" color="success" />
+                  <Metric label="Promotional days" value={`${Math.round((rows.filter((r) => r.Promo === 1).length / rows.length) * 100)}%`} detail="With coupon lift" color="neutral" />
                 </div>
                 <Panel title="Data preview" subtitle={`Showing first ${Math.min(rows.length, 12)} rows · ${sourceName}`}>
                   <div className="overflow-x-auto">
@@ -675,11 +718,11 @@ export default function RossmannSimulator() {
                       </thead>
                       <tbody>
                         {rows.slice(0, 8).map((row, index) => (
-                          <tr key={`${row.Store}-${row.Date}-${index}`} className="border-b border-border/60 last:border-0">
+                          <tr key={`${row.Store}-${row.Date}-${index}`} className="border-b border-border/60 transition-colors hover:bg-muted/30 last:border-0">
                             {Object.values(row).slice(0, 10).map((value, columnIndex) => (
                               <td key={`${columnIndex}`} className="px-3 py-2 tabular-nums">
                                 {value === null ? (
-                                  <span className="text-destructive">null</span>
+                                  <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">null</span>
                                 ) : typeof value === "number" ? (
                                   numberFormat(value)
                                 ) : (
@@ -702,10 +745,10 @@ export default function RossmannSimulator() {
         return analysis ? (
           <div className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <Metric label="Sales mean" value={money(analysis.salesStats.mean)} detail={`SD ${money(analysis.salesStats.sd)}`} />
-              <Metric label="Customer mean" value={numberFormat(analysis.customerStats.mean)} detail={`SD ${numberFormat(analysis.customerStats.sd)}`} />
-              <Metric label="Promo sales lift" value={`${analysis.uplift.toFixed(1)}%`} detail="Turnover boost from promos" />
-              <Metric label="Analyzed rows" value={numberFormat(effectiveRows.length)} detail="Active in memory" />
+              <Metric label="Sales mean" value={money(analysis.salesStats.mean)} detail={`SD ${money(analysis.salesStats.sd)}`} color="primary" />
+              <Metric label="Customer mean" value={numberFormat(analysis.customerStats.mean)} detail={`SD ${numberFormat(analysis.customerStats.sd)}`} color="neutral" />
+              <Metric label="Promo sales lift" value={`+${analysis.uplift.toFixed(1)}%`} detail="Turnover boost from promos" color="success" />
+              <Metric label="Analyzed rows" value={numberFormat(effectiveRows.length)} detail="Active in memory" color="warning" />
             </div>
             <div className="grid gap-5 xl:grid-cols-2">
               <ChartPanel title="Average sales by year" subtitle="Year-over-year trading performance" data={analysis.yearly} dataKey="sales" xKey="label" color="var(--chart-1)" formatter={money} />
@@ -733,7 +776,7 @@ export default function RossmannSimulator() {
       case 2:
         return (
           <div className="space-y-5">
-            <Panel title="Data Preparation & Hygiene" subtitle="Strict ML best practice: fit scaling and imputation parameters on train fold only.">
+            <Panel title="Data Preparation & Hygiene" subtitle="Strict ML best practice: fit scaling and imputation parameters on train fold only." accent="primary">
               <div className="divide-y divide-border">
                 <ToggleRow label="Remove duplicate records" description="Eliminate identical transaction logs." checked={preprocess.removeDuplicates} onChange={(checked) => updatePreprocess("removeDuplicates", checked)} />
                 <ToggleRow label="Drop closed days" description="Filter non-trading days (Open == 0 and Sales == 0) to prevent zero inflation." checked={preprocess.dropClosed} onChange={(checked) => updatePreprocess("dropClosed", checked)} />
@@ -754,10 +797,10 @@ export default function RossmannSimulator() {
               </div>
             </Panel>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <Metric label="Rows before" value={numberFormat(prepResult.summary.beforeRows)} detail="Loaded from source" />
-              <Metric label="Rows after" value={numberFormat(prepResult.summary.afterRows)} detail="Ready for modeling" />
-              <Metric label="Missing values" value={`${numberFormat(prepResult.summary.beforeMissing)} → 0`} detail="After contextual imputation" />
-              <Metric label="Duplicates removed" value={numberFormat(prepResult.summary.duplicatesRemoved)} detail="Identical entries dropped" />
+              <Metric label="Rows before" value={numberFormat(prepResult.summary.beforeRows)} detail="Loaded from source" color="neutral" />
+              <Metric label="Rows after" value={numberFormat(prepResult.summary.afterRows)} detail="Ready for modeling" color="primary" />
+              <Metric label="Missing values" value={`${numberFormat(prepResult.summary.beforeMissing)} → 0`} detail="After contextual imputation" color="success" />
+              <Metric label="Duplicates removed" value={numberFormat(prepResult.summary.duplicatesRemoved)} detail="Identical entries dropped" color="warning" />
             </div>
             <Panel title="Prepared records" subtitle="Transformed dataset preview ready for feature selection.">
               <PreviewTable rows={prepResult.rows} />
@@ -765,28 +808,57 @@ export default function RossmannSimulator() {
           </div>
         );
 
-      case 3:
+      case 3: {
+        const featureCategoryMap: Record<string, { label: string; tone: string }> = {
+          Customers: { label: "Traffic", tone: "bg-primary/10 text-primary" },
+          Promo: { label: "Promo", tone: "bg-chart-2/15 text-chart-2" },
+          Promo2Active: { label: "Promo", tone: "bg-chart-2/15 text-chart-2" },
+          DayOfWeek: { label: "Calendar", tone: "bg-chart-4/15 text-chart-4" },
+          SchoolHoliday: { label: "Calendar", tone: "bg-chart-4/15 text-chart-4" },
+          Month: { label: "Calendar", tone: "bg-chart-4/15 text-chart-4" },
+          WeekOfYear: { label: "Calendar", tone: "bg-chart-4/15 text-chart-4" },
+          IsWeekend: { label: "Calendar", tone: "bg-chart-4/15 text-chart-4" },
+          StoreType: { label: "Store", tone: "bg-chart-3/15 text-chart-3" },
+          Assortment: { label: "Store", tone: "bg-chart-3/15 text-chart-3" },
+          CompetitionDistance: { label: "Rival", tone: "bg-chart-3/15 text-chart-3" },
+          MonthsSinceCompetition: { label: "Rival", tone: "bg-chart-3/15 text-chart-3" },
+          Mean_TemperatureC: { label: "Weather", tone: "bg-chart-1/15 text-chart-1" },
+          Precipitationmm: { label: "Weather", tone: "bg-chart-1/15 text-chart-1" },
+          Mean_Humidity: { label: "Weather", tone: "bg-chart-1/15 text-chart-1" },
+          Max_Wind_SpeedKm_h: { label: "Weather", tone: "bg-chart-1/15 text-chart-1" },
+          trend: { label: "Search", tone: "bg-chart-5/15 text-chart-5" },
+        };
+        const allFeatureKeys = [
+          "Customers", "Promo", "DayOfWeek", "SchoolHoliday",
+          "StoreType", "Assortment", "CompetitionDistance",
+          "MonthsSinceCompetition", "Promo2Active",
+          "Mean_TemperatureC", "Precipitationmm", "Mean_Humidity",
+          "Max_Wind_SpeedKm_h", "trend", "Month", "WeekOfYear", "IsWeekend",
+        ];
+
         return (
           <div className="space-y-5">
             {analysis && (
               <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
-                <Panel title="Correlation with Sales" subtitle="Pearson linear correlation coefficient across numeric features.">
+                <Panel title="Correlation with Sales" subtitle="Pearson linear correlation coefficient across numeric features." accent="primary">
                   <div className="space-y-3">
                     {analysis.correlations.map(({ feature, value }) => (
-                      <div key={feature} className="grid grid-cols-[140px_1fr_54px] items-center gap-3 text-xs">
-                        <span className="truncate text-foreground">{featureLabels[feature] ?? feature}</span>
-                        <div className="h-2 overflow-hidden bg-muted">
+                      <div key={feature} className="grid grid-cols-[140px_1fr_60px] items-center gap-3 text-xs">
+                        <span className="truncate font-medium text-foreground">{featureLabels[feature] ?? feature}</span>
+                        <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                           <div
-                            className={`h-full ${value >= 0 ? "bg-chart-1" : "bg-chart-3"}`}
-                            style={{ width: `${Math.abs(value) * 100}%` }}
+                            className={`h-full rounded-full transition-all duration-500 ${value >= 0 ? "bg-gradient-to-r from-chart-1 to-chart-2" : "bg-gradient-to-r from-chart-5 to-chart-3"}`}
+                            style={{ width: `${Math.max(4, Math.abs(value) * 100)}%` }}
                           />
                         </div>
-                        <span className="text-right tabular-nums text-muted-foreground">{value.toFixed(3)}</span>
+                        <span className={`text-right font-semibold tabular-nums ${value >= 0 ? "text-chart-1" : "text-chart-3"}`}>
+                          {value >= 0 ? `+${value.toFixed(3)}` : value.toFixed(3)}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </Panel>
-                <Panel title="Correlation Matrix Heatmap" subtitle="Pairwise collinearity across key features.">
+                <Panel title="Correlation Matrix Heatmap" subtitle="Pairwise collinearity across key features." accent="warning">
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[420px] text-center text-[10px]">
                       <thead>
@@ -804,7 +876,7 @@ export default function RossmannSimulator() {
                             {row.values.map(({ feature, value }) => (
                               <td key={feature} className="p-1">
                                 <div
-                                  className="rounded-sm py-2 font-semibold tabular-nums"
+                                  className="rounded-md py-2 font-semibold tabular-nums transition-transform hover:scale-105"
                                   style={{
                                     backgroundColor: `color-mix(in oklab, ${value >= 0 ? "var(--chart-1)" : "var(--chart-3)"} ${Math.max(10, Math.abs(value) * 75)}%, var(--muted))`,
                                     color: "var(--foreground)",
@@ -823,39 +895,112 @@ export default function RossmannSimulator() {
               </div>
             )}
 
-            <Panel title="Select Features from Merged Family" subtitle="Choose signals across Store, Weather, Search Trends, and Calendar components.">
+            <Panel
+              title="Select Features from Merged Family"
+              subtitle="Choose signals across Store, Weather, Search Trends, and Calendar components."
+              accent="success"
+              badge={
+                <div className="flex flex-wrap gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFeatures(["Customers", "Promo", "DayOfWeek", "SchoolHoliday", "CompetitionDistance", "Mean_TemperatureC"]);
+                      setResult(null);
+                      setBackendTrainResult(null);
+                    }}
+                  >
+                    Core 6 Signals
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFeatures(allFeatureKeys);
+                      setResult(null);
+                      setBackendTrainResult(null);
+                    }}
+                  >
+                    Select All ({allFeatureKeys.length})
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setFeatures(["Customers", "Promo"]);
+                      setResult(null);
+                      setBackendTrainResult(null);
+                    }}
+                  >
+                    Minimal (2)
+                  </Button>
+                </div>
+              }
+            >
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {[
-                  "Customers", "Promo", "DayOfWeek", "SchoolHoliday",
-                  "StoreType", "Assortment", "CompetitionDistance",
-                  "MonthsSinceCompetition", "Promo2Active",
-                  "Mean_TemperatureC", "Precipitationmm", "Mean_Humidity",
-                  "Max_Wind_SpeedKm_h", "trend", "Month", "WeekOfYear", "IsWeekend"
-                ].map((feat) => (
-                  <label key={feat} className="flex cursor-pointer items-center gap-3 border border-border px-3 py-3 text-sm transition-colors hover:bg-muted/40">
-                    <Checkbox
-                      checked={features.includes(feat)}
-                      onCheckedChange={(checked) => toggleFeature(feat, checked)}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-foreground">{featureLabels[feat] ?? feat}</p>
-                      <p className="text-[10px] text-muted-foreground">{feat}</p>
-                    </div>
-                  </label>
-                ))}
+                {allFeatureKeys.map((feat) => {
+                  const isSelected = features.includes(feat);
+                  const cat = featureCategoryMap[feat] ?? { label: "Feature", tone: "bg-muted text-muted-foreground" };
+                  const catalogMeta = backendFeatures.find((f) => f.name === feat);
+                  return (
+                    <label
+                      key={feat}
+                      className={`group flex cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-3 text-sm transition-all duration-150 ${
+                        isSelected
+                          ? "border-primary/50 bg-primary/5 shadow-2xs"
+                          : "border-border bg-card hover:border-border/80 hover:bg-muted/40"
+                      }`}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => toggleFeature(feat, checked)}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="truncate text-xs font-semibold text-foreground">{featureLabels[feat] ?? feat}</p>
+                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${cat.tone}`}>
+                            {catalogMeta?.category ?? cat.label}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 flex items-center justify-between text-[10px] text-muted-foreground">
+                          <span className="font-mono">{feat}</span>
+                          {catalogMeta && (
+                            <span>{catalogMeta.dtype} · {catalogMeta.missing_percent}% null</span>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
-              <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
-                <span>{features.length} features selected for model fitting</span>
-                <Badge variant="outline">{backendReady ? "Scikit-Learn Normalizer" : "Browser Z-score"}</Badge>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
+                <span>
+                  <strong className="text-foreground">{features.length}</strong> of {allFeatureKeys.length} features selected for model fitting
+                </span>
+                <Badge variant="outline">{backendReady ? "Scikit-Learn StandardScaler" : "Browser Z-score Normalizer"}</Badge>
               </div>
             </Panel>
           </div>
         );
+      }
 
-      case 4:
+      case 4: {
+        const activeCoefficients = backendTrainResult?.coefficients ?? (
+          result
+            ? features.map((feat, idx) => {
+                const coeff = result.coefficients[idx] ?? 0;
+                return {
+                  feature: feat,
+                  coefficient: coeff,
+                  abs_importance: Math.abs(coeff),
+                };
+              })
+            : []
+        );
+
         return (
           <div className="space-y-5">
-            <Panel title="Model Training Configuration" subtitle="Fit Linear Regression baseline and K-Nearest Neighbors in Scikit-Learn.">
+            <Panel title="Model Training Configuration" subtitle="Fit Linear Regression baseline and K-Nearest Neighbors in Scikit-Learn." accent="primary">
               <div className="grid gap-6 xl:grid-cols-2">
                 <div>
                   <SliderField label="Training split" value={splitPercent} unit="%" min={60} max={90} onChange={(v) => { setSplitPercent(v); setResult(null); setBackendTrainResult(null); }} />
@@ -876,7 +1021,7 @@ export default function RossmannSimulator() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center justify-between border border-border px-3 py-2.5">
+                <div className="flex items-center justify-between rounded-lg border border-border px-3.5 py-2.5">
                   <div>
                     <p className="text-sm font-medium">Distance weighting</p>
                     <p className="text-xs text-muted-foreground">Closer neighbors exert higher influence.</p>
@@ -888,10 +1033,10 @@ export default function RossmannSimulator() {
                 <Button
                   disabled={training || features.length === 0}
                   onClick={runTraining}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="bg-gradient-to-r from-primary to-primary/85 text-primary-foreground shadow-xs hover:from-primary/90 hover:to-primary/75"
                 >
                   <WandSparkles className="h-4 w-4" />
-                  {training ? "Fitting models in Python backend…" : "Train Linear Regression vs KNN"}
+                  {training ? "Fitting models…" : "Train Linear Regression vs KNN"}
                 </Button>
                 <span className="text-xs text-muted-foreground">
                   {backendReady ? "Powered by Scikit-Learn & NumPy" : "Client-side calculation"} · {features.length} features selected
@@ -901,26 +1046,37 @@ export default function RossmannSimulator() {
 
             {(backendTrainResult || result) && (
               <div className="space-y-5">
-                <Panel
-                  title="Estimated Linear Regression Equation & Weights"
-                  subtitle="Coefficients representing marginal turnover change per standardized feature unit."
-                >
-                  <div className="break-words rounded bg-muted/30 p-3 font-mono text-xs leading-7 sm:text-sm">
-                    Sales = {money(backendTrainResult?.intercept ?? result?.intercept ?? 0)}
-                    {(backendTrainResult?.coefficients ?? []).map((c) => (
-                      <span key={c.feature}>
-                        {" "}{c.coefficient >= 0 ? "+" : "−"} {money(Math.abs(c.coefficient))} × z({featureLabels[c.feature] ?? c.feature})
-                      </span>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {(backendTrainResult?.coefficients ?? []).map((c) => (
-                      <Badge variant="secondary" key={c.feature} className="gap-1 text-xs">
-                        {featureLabels[c.feature] ?? c.feature}: <span className="font-semibold">{c.coefficient > 0 ? `+${c.coefficient}` : c.coefficient}</span>
-                      </Badge>
-                    ))}
-                  </div>
-                </Panel>
+                <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+                  <Panel
+                    title="OLS Regression Equation"
+                    subtitle="Coefficients: marginal turnover per standardized feature unit"
+                    accent="primary"
+                  >
+                    <div className="break-words rounded-lg bg-muted/40 p-3.5 font-mono text-xs leading-7 ring-1 ring-border/60 sm:text-sm">
+                      Sales = {money(backendTrainResult?.intercept ?? result?.intercept ?? 0)}
+                      {activeCoefficients.map((c) => (
+                        <span key={c.feature} className={c.coefficient >= 0 ? "text-chart-1" : "text-chart-5"}>
+                          {" "}{c.coefficient >= 0 ? "+" : "−"} {money(Math.abs(c.coefficient))} × z({featureLabels[c.feature] ?? c.feature})
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {activeCoefficients.map((c) => (
+                        <span
+                          key={c.feature}
+                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${c.coefficient >= 0 ? "border-chart-1/30 bg-chart-1/10 text-chart-1" : "border-chart-5/30 bg-chart-5/10 text-chart-5"}`}
+                        >
+                          {featureLabels[c.feature] ?? c.feature}
+                          <span className="font-bold">{c.coefficient >= 0 ? `+${c.coefficient.toFixed(1)}` : c.coefficient.toFixed(1)}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </Panel>
+
+                  {activeCoefficients.length > 0 && (
+                    <FeatureImportanceChart coefficients={activeCoefficients} />
+                  )}
+                </div>
 
                 <div className="grid gap-5 xl:grid-cols-2">
                   <PredictionScatter
@@ -940,38 +1096,120 @@ export default function RossmannSimulator() {
             )}
           </div>
         );
+      }
 
-      case 5:
-        return metrics ? (
+      case 5: {
+        if (!metrics) {
+          return (
+            <EmptyState title="Models Awaiting Training">
+              Execute model fitting in the previous step to evaluate RMSE, cross-validation, and bias-variance tradeoff.
+            </EmptyState>
+          );
+        }
+        const knnWins = metrics.knnTest.rmse < metrics.linearTest.rmse;
+        const bestRmse = Math.min(metrics.linearTest.rmse, metrics.knnTest.rmse);
+        const bestR2 = Math.max(metrics.linearTest.r2, metrics.knnTest.r2);
+        const rmseDelta = Math.abs(metrics.linearTest.rmse - metrics.knnTest.rmse);
+        const sweepData = knnSweep?.sweep_results ?? (result?.sweep ? result.sweep.map((s) => ({ k: s.k, test_rmse: s.rmse })) : null);
+        const cvRows = backendTrainResult?.cv_results ?? (result?.cv ? result.cv.map((c) => ({ fold: c.fold, linear_rmse: c.linearRmse, knn_rmse: c.knnRmse })) : null);
+
+        return (
           <div className="space-y-5">
-            <Panel title="Model Performance Evaluation" subtitle="Held-out validation comparison across root mean squared error and variance explained (R²).">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <Metric
+                label="Best Model (Held-Out)"
+                value={knnWins ? `KNN (k=${k})` : "Linear OLS"}
+                detail={knnWins ? "Local neighborhood fit wins" : "Parametric hyperplane wins"}
+                color="success"
+              />
+              <Metric
+                label="Best Test RMSE"
+                value={money(bestRmse)}
+                detail="Out-of-sample prediction error"
+                color="primary"
+              />
+              <Metric
+                label="Peak Variance Explained"
+                value={`${(bestR2 * 100).toFixed(1)}%`}
+                detail={`R² = ${bestR2.toFixed(3)} on test split`}
+                color="warning"
+              />
+              <Metric
+                label="Architecture Delta"
+                value={money(rmseDelta)}
+                detail="RMSE spread between models"
+                color="neutral"
+              />
+            </div>
+
+            <Panel
+              title="Model Performance Evaluation"
+              subtitle="Held-out validation comparison across root mean squared error and variance explained (R²)."
+              accent="success"
+              badge={
+                <Button variant="outline" size="sm" onClick={downloadResults}>
+                  <ArrowDownToLine className="h-3.5 w-3.5" />
+                  Export CSV
+                </Button>
+              }
+            >
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[650px] text-left text-xs">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground">
-                      {["Model Architecture", "Train RMSE", "Test RMSE", "Test MAE", "Test R²", "Generalization Status"].map((l) => (
+                      {["Model Architecture", "Train RMSE", "Test RMSE", "Test MAE / MAPE", "Test R²", "Generalization Status"].map((l) => (
                         <th key={l} className="px-3 py-3 font-medium">{l}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b border-border">
-                      <td className="px-3 py-3 font-semibold text-foreground">Linear Regression (OLS)</td>
-                      <td className="px-3 py-3 tabular-nums">{money(metrics.linearTrain.rmse)}</td>
-                      <td className="px-3 py-3 font-semibold tabular-nums text-primary">{money(metrics.linearTest.rmse)}</td>
-                      <td className="px-3 py-3 tabular-nums">{money(metrics.linearTest.mape)}</td>
-                      <td className="px-3 py-3 tabular-nums">{metrics.linearTest.r2.toFixed(3)}</td>
-                      <td className="px-3 py-3"><Badge variant="outline">Stable Baseline</Badge></td>
+                    <tr className={`border-b border-border transition-colors ${!knnWins ? "bg-chart-2/5" : ""}`}>
+                      <td className="px-3 py-3.5 font-semibold text-foreground">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-chart-1" />
+                          Linear Regression (OLS)
+                          {!knnWins && (
+                            <span className="rounded-full bg-chart-2/15 px-2 py-0.5 text-[10px] font-bold text-chart-2">★ Winner</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3.5 tabular-nums">{money(metrics.linearTrain.rmse)}</td>
+                      <td className="px-3 py-3.5 font-semibold tabular-nums text-primary">{money(metrics.linearTest.rmse)}</td>
+                      <td className="px-3 py-3.5 tabular-nums">{money(metrics.linearTest.mape)}</td>
+                      <td className="px-3 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-10 font-semibold tabular-nums">{metrics.linearTest.r2.toFixed(3)}</span>
+                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+                            <div className="h-full rounded-full bg-chart-1" style={{ width: `${Math.max(0, Math.min(100, metrics.linearTest.r2 * 100))}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3.5"><Badge variant="outline">Stable Baseline</Badge></td>
                     </tr>
-                    <tr>
-                      <td className="px-3 py-3 font-semibold text-foreground">K-Nearest Neighbors (KNN, k={k})</td>
-                      <td className="px-3 py-3 tabular-nums">{money(metrics.knnTrain.rmse)}</td>
-                      <td className="px-3 py-3 font-semibold tabular-nums text-chart-3">{money(metrics.knnTest.rmse)}</td>
-                      <td className="px-3 py-3 tabular-nums">{money(metrics.knnTest.mape)}</td>
-                      <td className="px-3 py-3 tabular-nums">{metrics.knnTest.r2.toFixed(3)}</td>
-                      <td className="px-3 py-3">
-                        <Badge variant={metrics.knnTest.rmse < metrics.linearTest.rmse ? "default" : "secondary"}>
-                          {metrics.knnTest.rmse < metrics.linearTest.rmse ? "Nonlinear Fit Win" : "Local Neighbor Noise"}
+                    <tr className={`transition-colors ${knnWins ? "bg-chart-2/5" : ""}`}>
+                      <td className="px-3 py-3.5 font-semibold text-foreground">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-chart-3" />
+                          K-Nearest Neighbors (KNN, k={k})
+                          {knnWins && (
+                            <span className="rounded-full bg-chart-2/15 px-2 py-0.5 text-[10px] font-bold text-chart-2">★ Winner</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3.5 tabular-nums">{money(metrics.knnTrain.rmse)}</td>
+                      <td className="px-3 py-3.5 font-semibold tabular-nums text-chart-3">{money(metrics.knnTest.rmse)}</td>
+                      <td className="px-3 py-3.5 tabular-nums">{money(metrics.knnTest.mape)}</td>
+                      <td className="px-3 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-10 font-semibold tabular-nums">{metrics.knnTest.r2.toFixed(3)}</span>
+                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+                            <div className="h-full rounded-full bg-chart-3" style={{ width: `${Math.max(0, Math.min(100, metrics.knnTest.r2 * 100))}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <Badge variant={knnWins ? "default" : "secondary"}>
+                          {knnWins ? "Nonlinear Fit Win" : "Local Neighbor Noise"}
                         </Badge>
                       </td>
                     </tr>
@@ -981,7 +1219,7 @@ export default function RossmannSimulator() {
             </Panel>
 
             <div className="grid gap-5 xl:grid-cols-2">
-              <Panel title="Train vs Test RMSE Error Comparison" subtitle="Lower error indicates superior predictive accuracy.">
+              <Panel title="Train vs Test RMSE Comparison" subtitle="Lower error = better generalization. Train < Test gap indicates overfitting." accent="warning">
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -989,23 +1227,35 @@ export default function RossmannSimulator() {
                         { model: "Linear", train: metrics.linearTrain.rmse, test: metrics.linearTest.rmse },
                         { model: "KNN", train: metrics.knnTrain.rmse, test: metrics.knnTest.rmse },
                       ]}
+                      barCategoryGap="30%"
                     >
+                      <defs>
+                        <linearGradient id="trainGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--chart-2)" stopOpacity={0.9} />
+                          <stop offset="100%" stopColor="var(--chart-2)" stopOpacity={0.5} />
+                        </linearGradient>
+                        <linearGradient id="testGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.9} />
+                          <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.5} />
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
                       <XAxis dataKey="model" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
-                      <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} />
+                      <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={(val) => numberFormat(Number(val))} />
                       <Tooltip {...tooltipStyle} formatter={(val) => money(Number(val))} />
-                      <Bar dataKey="train" name="Train RMSE" fill="var(--chart-2)" radius={[3, 3, 0, 0]} />
-                      <Bar dataKey="test" name="Test RMSE" fill="var(--chart-1)" radius={[3, 3, 0, 0]} />
+                      <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }} />
+                      <Bar dataKey="train" name="Train RMSE" fill="url(#trainGrad)" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="test" name="Test RMSE" fill="url(#testGrad)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </Panel>
 
-              {knnSweep && (
+              {sweepData && (
                 <ChartPanel
                   title="KNN Bias-Variance Curve (K Sweep)"
                   subtitle="Optimal K minimizes test RMSE while preventing overfitting."
-                  data={knnSweep.sweep_results}
+                  data={sweepData}
                   dataKey="test_rmse"
                   xKey="k"
                   color="var(--chart-3)"
@@ -1014,8 +1264,8 @@ export default function RossmannSimulator() {
               )}
             </div>
 
-            {backendTrainResult?.cv_results && (
-              <Panel title="5-Fold Cross-Validation Summary" subtitle="Evaluated across non-overlapping partitions to test variance stability.">
+            {cvRows && (
+              <Panel title="5-Fold Cross-Validation Summary" subtitle="Evaluated across non-overlapping partitions to test variance stability." accent="primary">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[420px] text-left text-xs">
                     <thead>
@@ -1027,8 +1277,8 @@ export default function RossmannSimulator() {
                       </tr>
                     </thead>
                     <tbody>
-                      {backendTrainResult.cv_results.map((f) => (
-                        <tr key={f.fold} className="border-b border-border/70">
+                      {cvRows.map((f) => (
+                        <tr key={f.fold} className="border-b border-border/70 transition-colors hover:bg-muted/30">
                           <td className="px-3 py-2.5 font-semibold">Fold {f.fold}</td>
                           <td className="px-3 py-2.5 tabular-nums">{money(f.linear_rmse)}</td>
                           <td className="px-3 py-2.5 tabular-nums">{money(f.knn_rmse)}</td>
@@ -1050,99 +1300,201 @@ export default function RossmannSimulator() {
               <Button variant="outline" onClick={() => setStage(4)}><RotateCcw className="h-4 w-4" />Adjust Parameters & Retrain</Button>
             </div>
           </div>
-        ) : (
-          <EmptyState title="Models Awaiting Training">
-            Execute model fitting in the previous step to evaluate RMSE, cross-validation, and bias-variance tradeoff.
-          </EmptyState>
         );
+      }
 
-      case 6:
+      case 6: {
+        // Compute offline client-side prediction when backend unavailable
+        const offlinePred = (!backendReady && result && effectiveRows.length > 0)
+          ? (() => {
+              try {
+                const row: RossmannRow = {
+                  Store: 1, Date: new Date().toISOString().slice(0, 10),
+                  Sales: null, Open: 1, StateHoliday: "0",
+                  Customers: customersInput, DayOfWeek: dayInput,
+                  Promo: promoInput ? 1 : 0, SchoolHoliday: schoolInput ? 1 : 0,
+                };
+                return predictOne(row, features as (keyof RossmannRow)[], result, effectiveRows, metric, k, weighted);
+              } catch { return null; }
+            })()
+          : null;
+        const linearPred = livePredictionData?.linear ?? offlinePred?.linear ?? 0;
+        const knnPred = livePredictionData?.knn ?? offlinePred?.knn ?? 0;
+        const hasPrediction = linearPred > 0 || knnPred > 0;
+        const advisoryAmount = Math.max(linearPred, knnPred);
+        const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        const scenarioPresets = [
+          { label: "🔥 Promo Monday Rush", customers: 920, day: 1, promo: true, school: false, comp: 650, temp: 19 },
+          { label: "☀️ Typical Midweek", customers: 560, day: 3, promo: false, school: false, comp: 1400, temp: 16 },
+          { label: "🎄 Holiday Family Peak", customers: 1080, day: 5, promo: true, school: true, comp: 2200, temp: 8 },
+          { label: "❄️ Cold Quiet Tuesday", customers: 390, day: 2, promo: false, school: false, comp: 450, temp: 1 },
+        ];
+
         return (
-          <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
-            <Panel title="Retail Scenario Parameters" subtitle="Adjust real-world operational parameters to forecast store sales turnover.">
-              <div className="space-y-4">
-                <label className="block text-xs text-muted-foreground">
-                  Expected Customer Foot-Traffic
-                  <Input
-                    className="mt-2"
-                    type="number"
-                    min={0}
-                    value={customersInput}
-                    onChange={(e) => setCustomersInput(Number(e.target.value))}
-                  />
-                </label>
-                <label className="block text-xs text-muted-foreground">
-                  Day of Week
-                  <Select value={String(dayInput)} onValueChange={(v) => setDayInput(Number(v))}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d, i) => (
-                        <SelectItem key={d} value={String(i + 1)}>{d}</SelectItem>
+          <div className="space-y-5">
+            <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+              {/* Left: Scenario controls */}
+              <Panel
+                title="Retail Scenario Parameters"
+                subtitle="Adjust conditions or pick a preset to instantly forecast store turnover"
+                accent="primary"
+              >
+                <div className="space-y-4">
+                  {/* Scenario quick-presets */}
+                  <div>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                      Quick Scenario Presets
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {scenarioPresets.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => {
+                            setCustomersInput(preset.customers);
+                            setDayInput(preset.day);
+                            setPromoInput(preset.promo);
+                            setSchoolInput(preset.school);
+                            setCompDistanceInput(preset.comp);
+                            setTempInput(preset.temp);
+                          }}
+                          className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-left text-xs font-medium text-foreground transition-all hover:border-primary/40 hover:bg-primary/5"
+                        >
+                          {preset.label}
+                        </button>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </label>
-                <label className="block text-xs text-muted-foreground">
-                  Nearest Competitor Distance (meters)
-                  <Input
-                    className="mt-2"
-                    type="number"
-                    min={0}
-                    value={compDistanceInput}
-                    onChange={(e) => setCompDistanceInput(Number(e.target.value))}
-                  />
-                </label>
-                <label className="block text-xs text-muted-foreground">
-                  Regional Temperature (°C)
-                  <Input
-                    className="mt-2"
-                    type="number"
-                    value={tempInput}
-                    onChange={(e) => setTempInput(Number(e.target.value))}
-                  />
-                </label>
-                <ToggleRow label="Promotional Campaign Active" description="Special coupon flyer distribution" checked={promoInput} onChange={setPromoInput} />
-                <ToggleRow label="School Holiday Period" description="State public school vacation" checked={schoolInput} onChange={setSchoolInput} />
-              </div>
-            </Panel>
+                    </div>
+                  </div>
 
-            <Panel title="Predicted Turnover & Inventory Advisory" subtitle="Model estimates for the specified store conditions.">
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div className="border-l-2 border-chart-1 pl-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">Linear Regression Model</p>
-                  <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
-                    {money(livePredictionData?.linear ?? 6250)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">Parametric baseline estimate</p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground">Customer Foot-Traffic</span>
+                        <span className="text-xs font-bold tabular-nums text-primary">{numberFormat(customersInput)}</span>
+                      </div>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={customersInput}
+                        onChange={(e) => setCustomersInput(Number(e.target.value))}
+                      />
+                      <Slider
+                        value={[Math.min(1500, Math.max(100, customersInput))]}
+                        min={100}
+                        max={1500}
+                        step={10}
+                        onValueChange={(v) => setCustomersInput(v[0] ?? 550)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground">Competitor Distance (m)</span>
+                        <span className="text-xs font-bold tabular-nums text-foreground">{numberFormat(compDistanceInput)}m</span>
+                      </div>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={compDistanceInput}
+                        onChange={(e) => setCompDistanceInput(Number(e.target.value))}
+                      />
+                      <Slider
+                        value={[Math.min(10000, Math.max(50, compDistanceInput))]}
+                        min={50}
+                        max={10000}
+                        step={50}
+                        onValueChange={(v) => setCompDistanceInput(v[0] ?? 1200)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground">Regional Temperature (°C)</span>
+                        <span className="text-xs font-bold tabular-nums text-foreground">{tempInput}°C</span>
+                      </div>
+                      <Input
+                        type="number"
+                        value={tempInput}
+                        onChange={(e) => setTempInput(Number(e.target.value))}
+                      />
+                      <Slider
+                        value={[Math.min(38, Math.max(-10, tempInput))]}
+                        min={-10}
+                        max={38}
+                        step={1}
+                        onValueChange={(v) => setTempInput(v[0] ?? 16)}
+                      />
+                    </div>
+                    <label className="block space-y-2">
+                      <span className="text-xs font-medium text-muted-foreground">Day of Week</span>
+                      <Select value={String(dayInput)} onValueChange={(v) => setDayInput(Number(v))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {days.map((d, i) => (
+                            <SelectItem key={d} value={String(i + 1)}>{d}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </label>
+                  </div>
+                  <div className="divide-y divide-border rounded-lg border border-border px-3">
+                    <ToggleRow label="Promotional Campaign Active" description="Coupon flyer boosts foot-traffic ~30%" checked={promoInput} onChange={setPromoInput} />
+                    <ToggleRow label="School Holiday Period" description="State public school vacation period" checked={schoolInput} onChange={setSchoolInput} />
+                  </div>
+                  {/* Active scenario badges */}
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">{numberFormat(customersInput)} customers</span>
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">{days[dayInput - 1]}</span>
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${promoInput ? "bg-chart-2/15 text-chart-2" : "bg-muted text-muted-foreground"}`}>{promoInput ? "🏷 Promo on" : "No promo"}</span>
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">{compDistanceInput}m rival</span>
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">{tempInput}°C</span>
+                  </div>
                 </div>
-                <div className="border-l-2 border-chart-3 pl-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">KNN Regression (k={k})</p>
-                  <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
-                    {money(livePredictionData?.knn ?? 6480)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">Instance-based local neighborhood</p>
-                </div>
-              </div>
+              </Panel>
 
-              <div className="mt-8 border-t border-border pt-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">Store Manager Operational Guidance</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  For this scenario, plan staffing and merchandise stocking for approximately{" "}
-                  <strong>{money(Math.max(livePredictionData?.linear ?? 6250, livePredictionData?.knn ?? 6480))}</strong> in sales turnover.
-                  {promoInput && " Promotional campaigns typically generate ~30% higher morning foot-traffic."}
-                </p>
-              </div>
+              {/* Right: Prediction output */}
+              <div className="space-y-5">
+                <Panel title="Predicted Daily Turnover" subtitle="Real-time model estimates for the configured store scenario" accent="primary">
+                  {hasPrediction ? (
+                    <PredictionComparison linear={linearPred} knn={knnPred} k={k} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 ring-4 ring-primary/5">
+                        <WandSparkles className="h-5 w-5 text-primary" />
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">Train models to unlock live forecasting</p>
+                      <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+                        Fit Linear Regression and KNN on your active dataset to simulate real-time store turnover.
+                      </p>
+                      <Button size="sm" className="mt-4" disabled={training} onClick={runTraining}>
+                        <WandSparkles className="h-3.5 w-3.5" />
+                        {training ? "Training Models…" : "Fit Models Now"}
+                      </Button>
+                    </div>
+                  )}
+                </Panel>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Badge variant="secondary">{numberFormat(customersInput)} customers</Badge>
-                <Badge variant="secondary">{promoInput ? "Promo active" : "No promo"}</Badge>
-                <Badge variant="secondary">Day {dayInput}</Badge>
-                <Badge variant="secondary">{compDistanceInput}m to competitor</Badge>
-                <Badge variant="secondary">{tempInput}°C</Badge>
+                {hasPrediction && (
+                  <Panel title="Inventory Advisory" subtitle="Operational recommendation based on model consensus" accent="success">
+                    <div className="space-y-3">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xs text-muted-foreground">Recommended stock budget</span>
+                        <span className="text-2xl font-bold tabular-nums text-chart-2">{money(advisoryAmount)}</span>
+                      </div>
+                      <div className="rounded-lg bg-chart-2/8 p-3 text-xs leading-5 text-foreground">
+                        Plan staffing and merchandise for approximately{" "}
+                        <strong>{money(advisoryAmount)}</strong> in daily sales.
+                        {promoInput && " Active promotion — schedule 2 extra staff for peak morning hours."}
+                        {schoolInput && " School holiday — expect +12% juvenile product demand."}
+                        {customersInput > 700 && " High foot-traffic day — ensure full shelf restocking overnight."}
+                      </div>
+                    </div>
+                  </Panel>
+                )}
               </div>
-            </Panel>
+            </div>
           </div>
         );
+      }
+
 
       default:
         return null;
@@ -1150,26 +1502,31 @@ export default function RossmannSimulator() {
   }
 
   return (
-    <main className={dark ? "dark min-h-screen bg-background text-foreground" : "min-h-screen bg-background text-foreground"}>
-      <header className="border-b border-border bg-card">
+    <main className="min-h-screen bg-background text-foreground">
+      <header className="relative overflow-hidden border-b border-border bg-card">
+        {/* Animated gradient accent bar */}
+        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-primary/0 via-primary to-chart-2/60" />
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-8">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center bg-primary text-primary-foreground rounded">
+            <div className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
               <Activity className="h-5 w-5" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">Rossmann Sales ML Learning Lab</p>
-              <p className="text-[11px] text-muted-foreground">Linear regression vs KNN regression · Multi-dataset pipeline</p>
+              <p className="truncate text-sm font-bold tracking-tight text-foreground">Rossmann Sales ML Lab</p>
+              <p className="text-[11px] text-muted-foreground">Linear Regression vs KNN · 5-table relational pipeline</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className={backendReady ? "border-chart-2/40 bg-chart-2/10 text-chart-2" : "border-border"}>
-              {backendReady ? "FASTAPI BACKEND ACTIVE" : "LOCAL CLIENT MODE"}
-            </Badge>
+            <div className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors ${backendReady ? "border-chart-2/40 bg-chart-2/10 text-chart-2" : "border-border bg-muted/50 text-muted-foreground"}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${backendReady ? "animate-pulse bg-chart-2" : "bg-muted-foreground"}`} />
+              {backendReady ? "FastAPI Active" : "Client Mode"}
+            </div>
             <Button
               aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
               size="icon"
               variant="ghost"
+              className="rounded-lg"
               onClick={() => setDark((v) => !v)}
             >
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -1178,83 +1535,113 @@ export default function RossmannSimulator() {
         </div>
       </header>
 
-      {/* Top Quick-Jump Storyflow Navigation */}
-      <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+      {/* Sticky stage navigation */}
+      <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-8">
-          <nav aria-label="Storyflow pipeline" className="flex overflow-x-auto">
+          <nav aria-label="Storyflow pipeline" className="flex overflow-x-auto scrollbar-none">
             {stages.map(({ label, short, icon: Icon }, index) => (
               <button
                 key={label}
                 aria-current={stage === index ? "step" : undefined}
                 onClick={() => setStage(index)}
-                className={`group flex min-w-[96px] flex-1 items-center gap-2 border-b-2 px-2 py-3 text-left transition-colors sm:min-w-0 sm:px-3 ${
+                className={`group relative flex min-w-[88px] flex-1 flex-col items-center gap-1 px-2 py-3 text-center transition-all sm:min-w-0 sm:px-3 ${
                   stage === index
-                    ? "border-primary text-primary"
+                    ? "text-primary"
                     : index < stage
-                      ? "border-chart-2 text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      ? "text-chart-2 hover:text-chart-2/80"
+                      : "text-muted-foreground hover:text-foreground"
                 }`}
               >
+                {/* Active indicator bar */}
                 <span
-                  className={`grid h-6 w-6 shrink-0 place-items-center rounded text-[10px] font-semibold ${
+                  className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full transition-all duration-300 ${
+                    stage === index ? "bg-primary" : index < stage ? "bg-chart-2/50" : "bg-transparent"
+                  }`}
+                />
+                <span
+                  className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[10px] font-semibold transition-all duration-200 ${
                     stage === index
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm"
                       : index < stage
                         ? "bg-chart-2/15 text-chart-2"
-                        : "bg-muted text-muted-foreground"
+                        : "bg-muted text-muted-foreground group-hover:bg-muted/80"
                   }`}
                 >
                   {index < stage ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
                 </span>
-                <span className="hidden truncate text-xs font-medium md:inline">{label}</span>
-                <span className="text-xs font-medium md:hidden">{short}</span>
+                <span className="hidden max-w-[80px] truncate text-[11px] font-medium md:block">{label}</span>
+                <span className="text-[10px] font-medium md:hidden">{short}</span>
               </button>
             ))}
           </nav>
         </div>
       </div>
 
-      {/* Stage Header Banner with Story Context */}
-      <div className="border-b border-border bg-muted/20">
+      {/* Stage hero banner */}
+      <div className="relative overflow-hidden border-b border-border">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-chart-2/5" />
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-8">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-              Step {stage + 1} of {stages.length} · {stages[stage]?.label}
-            </p>
-            <h1 className="mt-1 text-xl font-semibold sm:text-2xl">{stages[stage]?.label}</h1>
-            <p className="mt-1 max-w-2xl text-xs text-muted-foreground">{stages[stage]?.story}</p>
+          <div className="flex items-start gap-4">
+            <div className="mt-0.5 hidden rounded-lg bg-primary/10 p-2.5 sm:block">
+              {(() => { const Icon = stages[stage]?.icon ?? Activity; return <Icon className="h-5 w-5 text-primary" />; })()}
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                Step {stage + 1} / {stages.length}
+              </p>
+              <h1 className="mt-0.5 text-lg font-bold sm:text-xl">{stages[stage]?.label}</h1>
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">{stages[stage]?.story}</p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" disabled={fullRun} onClick={runFullSimulation}>
+            <Button
+              className="gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-sm hover:from-primary/90 hover:to-primary/70"
+              disabled={fullRun}
+              onClick={runFullSimulation}
+            >
               <Play className="h-4 w-4" />
-              {fullRun ? "Simulating Pipeline…" : "Run Full Simulation"}
+              {fullRun ? "Simulating…" : "Run Full Pipeline"}
             </Button>
             {rows.length > 0 && (
-              <Button variant="ghost" onClick={createRows}>
+              <Button variant="outline" size="sm" onClick={createRows}>
                 <RotateCcw className="h-4 w-4" />
-                Reset Data
+                Reset
               </Button>
             )}
           </div>
           {fullRun && (
-            <div className="w-full">
-              <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
-                <span>Executing multi-table ingestion, feature extraction, and ML fitting</span>
-                <span>{progress}%</span>
+            <div className="w-full space-y-1.5">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Executing ingestion → features → ML fitting</span>
+                <span className="font-semibold text-primary">{progress}%</span>
               </div>
-              <Progress value={progress} />
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-chart-2 transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
             </div>
           )}
         </div>
       </div>
 
+
       <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-8 sm:py-8">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              {rows.length ? `${numberFormat(rows.length)} active observations` : "Waiting for dataset"}{" "}
-              {processedRows.length > 0 ? `· ${numberFormat(processedRows.length)} prepared` : ""}
-            </p>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card/60 px-4 py-2.5">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className={`h-2 w-2 rounded-full ${rows.length ? "bg-chart-2" : "bg-muted-foreground"}`} />
+            <span className="font-semibold text-foreground">
+              {rows.length ? `${numberFormat(rows.length)} active observations` : "Waiting for dataset"}
+            </span>
+            {processedRows.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                {numberFormat(processedRows.length)} prepared
+              </span>
+            )}
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+              {features.length} features active
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -1279,9 +1666,19 @@ export default function RossmannSimulator() {
 
         {renderStage()}
 
-        <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-border py-5 text-[11px] text-muted-foreground">
-          <span>Rossmann Sales ML Learning Lab · Research Simulator</span>
-          <span>Linear Regression vs KNN · Multi-Table Relational Pipeline</span>
+        <footer className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-border py-6 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2.5">
+            <div className="grid h-6 w-6 place-items-center rounded-md bg-primary/15 text-primary">
+              <Activity className="h-3.5 w-3.5" />
+            </div>
+            <span className="font-semibold text-foreground">Rossmann Sales ML Learning Lab</span>
+            <span className="hidden sm:inline">· Interactive Retail Forecasting Workbench</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-[11px]">
+            <span className="rounded-full border border-border bg-card px-2.5 py-0.5">OLS Linear Regression</span>
+            <span className="rounded-full border border-border bg-card px-2.5 py-0.5">K-Nearest Neighbors (k={k})</span>
+            <span className="rounded-full border border-border bg-card px-2.5 py-0.5">5-Table Relational Schema</span>
+          </div>
         </footer>
       </div>
     </main>
@@ -1342,20 +1739,45 @@ function ChartPanel({
   secondaryKey?: string;
   secondaryColor?: string;
 }) {
+  const gradId = `grad-${dataKey}`;
   return (
     <Panel title={title} subtitle={subtitle}>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 5, left: 0 }}>
-            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-            <XAxis dataKey={xKey} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} />
-            <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={(val) => numberFormat(Number(val))} />
-            <Tooltip {...tooltipStyle} formatter={(val, name) => [formatter(Number(val)), name]} />
-            <Bar dataKey={dataKey} name={dataKey === "sales" ? "Avg sales" : "Avg customers"} fill={color} radius={[3, 3, 0, 0]} />
-            {secondaryKey && (
+          {secondaryKey ? (
+            <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 5, left: 0 }}>
+              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+              <XAxis dataKey={xKey} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} />
+              <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={(val) => numberFormat(Number(val))} />
+              <Tooltip {...tooltipStyle} formatter={(val, name) => [formatter(Number(val)), name]} />
+              <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }} />
+              <Bar dataKey={dataKey} name="Avg sales" fill={color} radius={[3, 3, 0, 0]} />
               <Bar dataKey={secondaryKey} name="Avg customers" fill={secondaryColor ?? "var(--chart-3)"} radius={[3, 3, 0, 0]} />
-            )}
-          </ComposedChart>
+            </ComposedChart>
+          ) : (
+            <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 5, left: 0 }}>
+              <defs>
+                <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={color} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={color} stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+              <XAxis dataKey={xKey} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} />
+              <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={(val) => numberFormat(Number(val))} />
+              <Tooltip {...tooltipStyle} formatter={(val, name) => [formatter(Number(val)), name]} />
+              <Area
+                type="monotone"
+                dataKey={dataKey}
+                name={dataKey === "sales" ? "Avg sales" : "Test RMSE"}
+                stroke={color}
+                strokeWidth={2}
+                fill={`url(#${gradId})`}
+                dot={{ fill: color, r: 3, strokeWidth: 0 }}
+                activeDot={{ r: 5, strokeWidth: 0 }}
+              />
+            </AreaChart>
+          )}
         </ResponsiveContainer>
       </div>
     </Panel>
@@ -1470,5 +1892,123 @@ function PredictionScatter({
         </ResponsiveContainer>
       </div>
     </Panel>
+  );
+}
+
+/** Horizontal bar chart of linear regression coefficients. */
+function FeatureImportanceChart({
+  coefficients,
+}: {
+  coefficients: { feature: string; coefficient: number; abs_importance: number }[];
+}) {
+  const sorted = [...coefficients]
+    .sort((a, b) => b.abs_importance - a.abs_importance)
+    .slice(0, 10);
+  const maxImp = Math.max(...sorted.map((c) => c.abs_importance), 0.001);
+  return (
+    <Panel title="Feature Importance" subtitle="Standardized linear regression coefficients — magnitude = predictive weight" accent="primary">
+      <div className="space-y-2.5">
+        {sorted.map((c) => {
+          const pct = Math.round((c.abs_importance / maxImp) * 100);
+          const isPos = c.coefficient >= 0;
+          return (
+            <div key={c.feature} className="grid grid-cols-[160px_1fr_56px] items-center gap-3">
+              <span className="truncate text-xs font-medium text-foreground" title={featureLabels[c.feature] ?? c.feature}>
+                {featureLabels[c.feature] ?? c.feature}
+              </span>
+              <div className="relative h-5 overflow-hidden rounded bg-muted">
+                <div
+                  className={`h-full rounded transition-all duration-700 ease-out ${isPos ? "bg-gradient-to-r from-chart-1/70 to-chart-1" : "bg-gradient-to-r from-chart-5/70 to-chart-5"}`}
+                  style={{ width: `${pct}%` }}
+                />
+                <span className="absolute inset-0 flex items-center px-2 text-[10px] font-semibold text-foreground/80">
+                  {isPos ? "+" : ""}
+                  {c.coefficient.toFixed(1)}
+                </span>
+              </div>
+              <span className={`text-right text-xs font-bold tabular-nums ${isPos ? "text-chart-1" : "text-chart-5"}`}>
+                {pct}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-3 text-[10px] text-muted-foreground">
+        Blue = positive correlation with sales · Red = inverse correlation
+      </p>
+    </Panel>
+  );
+}
+
+/** Visual gradient bar comparison of Linear vs KNN prediction outputs. */
+function PredictionComparison({
+  linear,
+  knn,
+  k,
+}: {
+  linear: number;
+  knn: number;
+  k: number;
+}) {
+  const maxVal = Math.max(linear, knn, 1);
+  const deviation = Math.abs(((linear - knn) / maxVal) * 100);
+  const agreement = 100 - deviation;
+  const winner = linear < knn ? "KNN" : "Linear";
+
+  return (
+    <div className="space-y-5">
+      {/* Linear prediction bar */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-chart-1" />
+            <span className="font-semibold text-foreground">Linear Regression (OLS)</span>
+          </div>
+          <span className="tabular-nums font-bold text-chart-1">{money(linear)}</span>
+        </div>
+        <div className="h-4 overflow-hidden rounded-full bg-muted/60">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-chart-1/60 via-chart-1 to-chart-1/80 transition-all duration-700 ease-out"
+            style={{ width: `${(linear / maxVal) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* KNN prediction bar */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-chart-3" />
+            <span className="font-semibold text-foreground">KNN Regression (k={k})</span>
+          </div>
+          <span className="tabular-nums font-bold text-chart-3">{money(knn)}</span>
+        </div>
+        <div className="h-4 overflow-hidden rounded-full bg-muted/60">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-chart-3/60 via-chart-3 to-chart-3/80 transition-all duration-700 ease-out"
+            style={{ width: `${(knn / maxVal) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Agreement indicator */}
+      <div className="rounded-xl border border-border bg-muted/30 p-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">Model agreement</span>
+          <span className={`font-bold tabular-nums ${agreement > 90 ? "text-chart-2" : agreement > 75 ? "text-chart-3" : "text-destructive"}`}>
+            {agreement.toFixed(1)}%
+          </span>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${agreement > 90 ? "bg-chart-2" : agreement > 75 ? "bg-chart-3" : "bg-destructive"}`}
+            style={{ width: `${agreement}%` }}
+          />
+        </div>
+        <p className="mt-2 text-[10px] text-muted-foreground">
+          {deviation.toFixed(1)}% deviation · {winner} predicts {winner === "KNN" ? "higher" : "lower"} turnover
+        </p>
+      </div>
+    </div>
   );
 }

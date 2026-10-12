@@ -100,7 +100,10 @@ export function generateSyntheticData(options: {
   const mutableColumns: (keyof RossmannRow)[] = ["Sales", "Customers", "Promo", "SchoolHoliday"];
   for (let index = 0; index < missingCount; index += 1) {
     const row = rows[Math.floor(random() * rows.length)];
-    if (row) row[mutableColumns[Math.floor(random() * mutableColumns.length)]] = null;
+    const colKey = mutableColumns[Math.floor(random() * mutableColumns.length)];
+    if (row && colKey) {
+      (row as Record<string, unknown>)[colKey] = null;
+    }
   }
   return rows;
 }
@@ -113,11 +116,15 @@ function parseNumber(value: unknown): number | null {
 
 export function normalizeUploadedRow(record: Record<string, unknown>): RossmannRow {
   return {
-    Store: parseNumber(record.Store), DayOfWeek: parseNumber(record.DayOfWeek),
-    Date: String(record.Date ?? ""), Sales: parseNumber(record.Sales),
-    Customers: parseNumber(record.Customers), Open: parseNumber(record.Open),
-    Promo: parseNumber(record.Promo), StateHoliday: String(record.StateHoliday ?? ""),
-    SchoolHoliday: parseNumber(record.SchoolHoliday),
+    Store: parseNumber(record["Store"]),
+    DayOfWeek: parseNumber(record["DayOfWeek"]),
+    Date: String(record["Date"] ?? ""),
+    Sales: parseNumber(record["Sales"]),
+    Customers: parseNumber(record["Customers"]),
+    Open: parseNumber(record["Open"]),
+    Promo: parseNumber(record["Promo"]),
+    StateHoliday: String(record["StateHoliday"] ?? ""),
+    SchoolHoliday: parseNumber(record["SchoolHoliday"]),
   };
 }
 

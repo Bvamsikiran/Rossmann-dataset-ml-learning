@@ -1,24 +1,59 @@
-# Exact Screenshot
+# Rossmann Sales ML Learning Lab
 
-Implement exactly the screenshot and nothing else
+An interactive, production-grade Machine Learning laboratory and simulator for the Rossmann Store Sales dataset. This application features a React/TypeScript frontend and a FastAPI (Python + Pandas + Scikit-Learn) backend to integrate, explore, preprocess, train, and compare **Linear Regression** versus **K-Nearest Neighbors (KNN)** models.
 
-This project was built with [Lovable](https://lovable.dev).
+## Key Features
 
-## Build with Lovable
+- **Multi-Dataset Relational Integration**: Seamlessly loads and merges:
+  - `train.csv` & `test.csv` (sales, customers, promotions, open status)
+  - `store.csv` (store type, assortment, competition distance, Promo2)
+  - `store_states.csv` & `state_names.csv` (geographic state mapping)
+  - `weather.csv` (temperature, humidity, precipitation, weather events)
+  - `googletrend.csv` (regional Google search interest)
+- **7-Stage Workflow**:
+  1. **Data Collection & Integration**: Multi-table merging and statistical previews.
+  2. **Exploratory Data Analysis**: Histograms, scatter plots, and correlation matrix.
+  3. **Preprocessing**: Missing value imputation, outlier management, and filtering.
+  4. **Dynamic Feature Selection**: Select any merged feature from store, weather, and sales tables.
+  5. **Model Training**: Scikit-Learn Linear Regression vs. KNN with k-fold cross validation.
+  6. **Evaluation & Comparison**: RMSE, MAE, R², residual distributions, and coefficient analysis.
+  7. **Live Prediction Playground**: Interactive simulator for predicting store revenue based on custom parameters.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/51b66e36-04e1-41c0-a53d-279d44487737).
+## Architecture
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+```
+Rossmann-dataset-ml-learning/
+├── backend/                  # Python FastAPI Backend
+│   ├── config.py             # Dataset paths & app settings
+│   ├── data_loader.py        # Multi-CSV loader & validator
+│   ├── pipeline.py           # Relational joins & feature engineering
+│   ├── models.py             # Scikit-learn Linear Regression & KNN
+│   ├── main.py               # FastAPI REST endpoints
+│   └── requirements.txt      # Python dependencies
+├── src/                      # React / TypeScript Frontend
+│   ├── components/           # UI Components & RossmannSimulator
+│   ├── routes/               # TanStack Router routes
+│   └── lib/                  # Client-side algorithms & utilities
+└── package.json              # Frontend scripts & dependencies
+```
 
-## Development
+## Running the Application Locally
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+### 1. Start the Python Backend
+Ensure Python 3.10+ is installed:
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+```bash
+cd backend
+pip install -r requirements.txt
+python main.py
+```
+*The backend runs on `http://127.0.0.1:8000` (API documentation available at `/docs`).*
+
+### 2. Start the Frontend
+In another terminal:
+
+```bash
+npm install
 npm run dev
 ```
+*The frontend runs on `http://localhost:5173` and automatically proxies `/api` calls to the FastAPI backend.*
